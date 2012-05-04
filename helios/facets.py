@@ -1,34 +1,41 @@
+from helios.forms.fields import MultipleCharField
+
+
+class FacetResult(object):
+    def __init__(self, facet, results, values):
+        self.facet = facet
+        self.results = results
+        self.values = values
 
 
 class BaseFacet(object):
 
-    def __init__(self, name, multiselect=False, mincount=0, limit=10, sort='count', missing=False, **kwargs):
+    def __init__(self, name, fieldname, solr_fieldname, multiselect_or=False, mincount=0, limit=10, sort='count', offset=0, missing=False, **kwargs):
         self.name = name
-        self.multiselect = multiselect
+        self.form_fieldname = form_fieldname
+        self.solr_fieldname = solr_fieldname
+        self.multiselect_or = multiselect_or
         self.limit = limit
         self.sort = sort
         self.mincount = mincount
         self.missing = missing
         self.active = []
         self.values = []
-        self.tag_name = name.lower().replace(' ','')
-
-    def get_index_field(self):
-        """
-        Returns the name of the field used in the search index
-        """
-        return self.formfield_name()
+        self.offset = offset
 
     def add_to_query(self, query):
-        index_field = self.get_index_field()
-        if self.multiselect:
-            index_field = '{!ex=%s}%s' % (self.tag_name, index_field)
-        query.add_field_facet(index_field)
+        query.add_field_facet(self.final_query_field())
+
+    def final_query_field(self):
+        index_field = solr_fieldname
+        if self.multiselect_or:
+            index_field = '{!ex=%s}%s' % (self.form_fieldname, index_field)
+        return index_field
 
     def filter_query(self, query, values):
         if values:
             value_str = ' OR '.join([self.transform_form_value(x) for x in values])
-            query.add_narrow_query('{!tag=%s}%s:(%s)' % (self.tag_name, self.get_index_field(), value_str))
+            query.add_narrow_query('{!tag=%s}%s:(%s)' % (self.form_fieldname, self.get_index_field(), value_str))
 
     def formfield(self):
         """
@@ -55,7 +62,7 @@ class BaseFacet(object):
         self.values = []
 
         if facet_data['fields'].get(self.facet_key(), None):
-            facet_values = sorted(facet_data['fields'][self.facet_key()], key=self.facet_sortkey)
+             facet_values = sorted(facet_data['fields'][self.facet_key()], key=self.facet_sortkey)
 
             for x in facet_values:
                 t = {

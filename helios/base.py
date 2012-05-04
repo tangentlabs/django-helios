@@ -31,6 +31,7 @@ class Searcher(object):
         facets = kwargs.pop('facets', [])
         offset = kwargs.pop('offset', 0)
         rows = kwargs.pop('rows', 10)
+        sort = kwargs.pop('sort', None)
 
         params = {}
 
@@ -39,22 +40,30 @@ class Searcher(object):
             query = '%s:%s' % (filter[0], filter[1])
             fqs.append(query)
 
-#        for facet in facets:
-#            params['facet'] = 'true'
-#            params.get('facet.field', []).append(facet.field)
-#            params['f.%s.sort' % facet.field] = facet.sort
-#            params['f.%s.limit' % facet.field] = facet.limit
-#            params['f.%s.offset' % facet.field] = facet.offset
-#            params['f.%s.mincount' % facet.field] = facet.mincount
-#            params['f.%s.missing' % facet.field] = facet.missing
+        for facet in facets:
+            params['facet'] = 'true'
+            params.get('facet.field', []).append(facet.final_query_field())
+            params['f.%s.sort' % facet.field] = facet.sort
+            params['f.%s.limit' % facet.field] = facet.limit
+            params['f.%s.offset' % facet.field] = facet.offset
+            params['f.%s.mincount' % facet.field] = facet.mincount
+            params['f.%s.missing' % facet.field] = facet.missing
 
         params['rows'] = rows
         params['start'] = offset
+
+        if sort:
+            params['sort'] = sort
 
         return params
 
     def search(self, **kwargs):
         q = kwargs.pop('q', '*:*')
+
+        results = self.connection.search(q, **self.get_search_params(**kwargs))
+
+
+
         return self.connection.search(q, **self.get_search_params(**kwargs))
 
     def new_query(self):
@@ -112,6 +121,8 @@ class Query(object):
         self.q = q
 
     def run(self):
+        sort = ', '.join(['%s %s' % (x[0], x[1]) for x in self.sorts])
+
         kwargs = {
             'q': self.q,
             'facets': self.facets,
@@ -120,6 +131,7 @@ class Query(object):
             'rows': self.end - self.start
         }
 
-        print kwargs
+        if sort:
+            kwargs['sort'] = sort
 
         return self.searcher.search(**kwargs)
