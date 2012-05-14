@@ -7,23 +7,33 @@ except ImportError:
     import json
 
 
+class SolrFacetResult(object):
+    def __init__(self, fieldname, results):
+        self.fieldname = fieldname
+        self.results = results
+
 class SolrResults(object):
     def __init__(self, docs, hits, highlighting=None, facets=None, spellcheck=None, stats=None, qtime=None, debug=None):
         self.docs = docs
         self.hits = hits
         self.highlighting = highlighting or {}
-        self.facets = facets or {}
+        facets = facets or {}
         self.spellcheck = spellcheck or {}
         self.stats = stats or {}
         self.qtime = qtime
         self.debug = debug or {}
+
+        self.facets = []
+
+        for k,v in facets.get('facet_fields', {}).iteritems():
+            pairs = zip(v[0::2],v[1::2])
+            self.facets.append(SolrFacetResult(k, pairs))
 
     def __len__(self):
         return len(self.docs)
 
     def __iter__(self):
         return iter(self.docs)
-
 
 
 class SolrConnection(object):

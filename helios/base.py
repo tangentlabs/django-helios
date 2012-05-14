@@ -24,9 +24,6 @@ class Searcher(object):
         self.connection = kwargs.pop('connection')
 
     def get_search_params(self, **kwargs):
-        print kwargs
-
-
         filters = kwargs.pop('filters', [])
         facets = kwargs.pop('facets', [])
         offset = kwargs.pop('offset', 0)
@@ -39,15 +36,26 @@ class Searcher(object):
             fqs = params.get('fq', [])
             query = '%s:%s' % (filter[0], filter[1])
             fqs.append(query)
+            params['fq'] = fqs
 
-        for facet in facets:
+
+        if facets:
             params['facet'] = 'true'
-            params.get('facet.field', []).append(facet.final_query_field())
-            params['f.%s.sort' % facet.field] = facet.sort
-            params['f.%s.limit' % facet.field] = facet.limit
-            params['f.%s.offset' % facet.field] = facet.offset
-            params['f.%s.mincount' % facet.field] = facet.mincount
-            params['f.%s.missing' % facet.field] = facet.missing
+
+            for facet in facets:
+                facet_fields = params.get('facet.field', [])
+                facet_fields.append(facet.final_query_field())
+                params['facet.field'] = facet_fields
+                if facet.sort:
+                    params['f.%s.facet.sort' % facet.solr_fieldname] = facet.sort
+                if facet.limit:
+                    params['f.%s.facet.limit' % facet.solr_fieldname] = facet.limit
+                if facet.offset:
+                    params['f.%s.facet.offset' % facet.solr_fieldname] = facet.offset
+                if facet.mincount:
+                    params['f.%s.facet.mincount' % facet.solr_fieldname] = facet.mincount
+                if facet.missing:
+                    params['f.%s.facet.missing' % facet.solr_fieldname] = facet.missing
 
         params['rows'] = rows
         params['start'] = offset
@@ -59,11 +67,6 @@ class Searcher(object):
 
     def search(self, **kwargs):
         q = kwargs.pop('q', '*:*')
-
-        results = self.connection.search(q, **self.get_search_params(**kwargs))
-
-
-
         return self.connection.search(q, **self.get_search_params(**kwargs))
 
     def new_query(self):

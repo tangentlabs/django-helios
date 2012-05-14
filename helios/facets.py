@@ -10,9 +10,9 @@ class FacetResult(object):
 
 class BaseFacet(object):
 
-    def __init__(self, name, fieldname, solr_fieldname, multiselect_or=False, mincount=0, limit=10, sort='count', offset=0, missing=False, **kwargs):
+    def __init__(self, name, solr_fieldname, form_fieldname=None, multiselect_or=None, mincount=None, limit=None, sort=None, offset=None, missing=None, **kwargs):
         self.name = name
-        self.form_fieldname = form_fieldname
+        self.form_fieldname = form_fieldname or self.name.lower()
         self.solr_fieldname = solr_fieldname
         self.multiselect_or = multiselect_or
         self.limit = limit
@@ -27,15 +27,15 @@ class BaseFacet(object):
         query.add_field_facet(self.final_query_field())
 
     def final_query_field(self):
-        index_field = solr_fieldname
+        index_field = self.solr_fieldname
         if self.multiselect_or:
             index_field = '{!ex=%s}%s' % (self.form_fieldname, index_field)
         return index_field
 
-    def filter_query(self, query, values):
-        if values:
-            value_str = ' OR '.join([self.transform_form_value(x) for x in values])
-            query.add_narrow_query('{!tag=%s}%s:(%s)' % (self.form_fieldname, self.get_index_field(), value_str))
+    def filter_query(self, query):
+        if self.selected_values:
+            value_str = ' OR '.join([self.transform_form_value(x) for x in self.selected_values])
+            query.add_filter('{!tag=%s}%s' % (self.form_fieldname, self.solr_fieldname), value_str)
 
     def formfield(self):
         """
@@ -55,21 +55,24 @@ class BaseFacet(object):
         """
         return '"%s"' % value
 
-    def update(self, facet_data, values):
+    def set_selected_values(self, values):
+        self.selected_values = values
+
+    def update(self, facet_results):
         """
         Updates the facet with the results of the search query and form data
         """
         self.values = []
 
-        if facet_data['fields'].get(self.facet_key(), None):
-             facet_values = sorted(facet_data['fields'][self.facet_key()], key=self.facet_sortkey)
+        if facet_results:
+            facet_values = sorted(facet_results.results, key=self.facet_sortkey)
 
             for x in facet_values:
                 t = {
                     'label': self.label_from_value(x[0]),
                     'query': x[0],
                     'count': x[1],
-                    'selected':  x[0] in values,
+                    'selected':  x[0] in self.selected_values,
                     }
 
                 if t['selected']:
@@ -80,12 +83,12 @@ class BaseFacet(object):
                 self.values.append(t)
 
             # Deal with any selected facets that fall outside of the selected range
-            for x in set(values) - set([x[0] for x in facet_values]):
+            for x in set(self.selected_values) - set([x[0] for x in facet_values]):
                 t = {
                     'label': self.label_from_value(x),
                     'query': x,
                     'count': 1,
-                    'selected':  x in values,
+                    'selected':  x in self.selected_values,
                     }
 
                 if t['selected']:
@@ -101,3 +104,7 @@ class BaseFacet(object):
 
     def facet_key(self):
         return self.formfield_name()
+
+
+class FieldFacet(BaseFacet):
+    pass
