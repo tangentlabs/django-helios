@@ -9,22 +9,16 @@ class FacetResult(object):
 
 
 class BaseFacet(object):
-
-    def __init__(self, name, solr_fieldname, form_fieldname=None, multiselect_or=None, mincount=None, limit=None, sort=None, offset=None, missing=None, **kwargs):
+    def __init__(self, name, **kwargs):
         self.name = name
-        self.form_fieldname = form_fieldname or self.name.lower()
-        self.solr_fieldname = solr_fieldname
-        self.multiselect_or = multiselect_or
-        self.limit = limit
-        self.sort = sort
-        self.mincount = mincount
-        self.missing = missing
+        self.form_fieldname = kwargs.pop('form_fieldname', None) or self.name.lower()
+        self.solr_fieldname = kwargs.pop('solr_fieldname')
+        self.multiselect_or = kwargs.pop('multiselect_or', None)
         self.active = []
-        self.values = []
-        self.offset = offset
+        self.selected_values = []
 
-    def add_to_query(self, query):
-        query.add_field_facet(self.final_query_field())
+    def build_params(self, params):
+        return params
 
     def final_query_field(self):
         index_field = self.solr_fieldname
@@ -35,7 +29,7 @@ class BaseFacet(object):
     def filter_query(self, query):
         if self.selected_values:
             value_str = ' OR '.join([self.transform_form_value(x) for x in self.selected_values])
-            query.add_filter('{!tag=%s}%s' % (self.form_fieldname, self.solr_fieldname), value_str)
+            query.add_filter('{!tag=%s}%s' % (self.form_fieldname, self.solr_fieldname), '(%s)' % value_str)
 
     def formfield(self):
         """
@@ -107,4 +101,94 @@ class BaseFacet(object):
 
 
 class FieldFacet(BaseFacet):
-    pass
+    def __init__(self, name, **kwargs):
+        self.limit = kwargs.pop('limit', 10)
+        self.sort = kwargs.pop('sort', None)
+        self.mincount = kwargs.pop('mincount', 1)
+        self.missing = kwargs.pop('missing', None)
+        self.offset = kwargs.pop('offset', None)
+
+        super(FieldFacet, self).__init__(name, **kwargs)
+
+    def build_params(self, params):
+        params = super(FieldFacet, self).build_params(params)
+        params['facet.field'].append(self.final_query_field())
+
+        if self.sort:
+            params['f.%s.facet.sort' % self.solr_fieldname] = self.sort
+        if self.limit:
+            params['f.%s.facet.limit' % self.solr_fieldname] = self.limit
+        if self.offset:
+            params['f.%s.facet.offset' % self.solr_fieldname] = self.offset
+        if self.mincount:
+            params['f.%s.facet.mincount' % self.solr_fieldname] = self.mincount
+        if self.missing:
+            params['f.%s.facet.missing' % self.solr_fieldname] = self.missing
+
+        return params
+
+
+class QueryFacet(BaseFacet):
+    def __init__(self, name, **kwargs):
+        self.choices = kwargs.pop('choices')
+        super(QueryFacet, self).__init__(name, **kwargs)
+
+    def build_params(self, params):
+        params = super(QueryFacet, self).build_params(params)
+
+        for choice in self.choices:
+            query = '%s:%s' % (self.final_query_field(), choice[1])
+            params['facet.query'].append(query)
+
+        return params
+
+    def _bucket_to_query(self, bucket):
+        limits = bucket[1:-1].split(' ')
+        return '%s-%s' % (limits[0] if limits[0] != '*' else '', limits[2] if limits[2] != '*' else '')
+
+    def transform_form_value(self, value):
+        try:
+            start, end = value.split('-')
+        except ValueError:
+            start = '*'
+            end = '*'
+
+        if start in ['', '*']:
+            start = '*'
+        else:
+            try:
+                float(start)
+            except ValueError:
+                start = '*'
+        if end in ['', '*']:
+            end = '*'
+        else:
+            try:
+                float(end)
+            except ValueError:
+                # Probably a hacking attempt
+                end = '*'
+
+        return "[%s TO %s]" % (start, end)
+
+    def update(self, facet_results):
+        self.values = []
+        result_dict = dict(facet_results.results)
+        for label, query in self.choices:
+            try:
+                count = result_dict[query]
+            except KeyError:
+                count = 0
+            if count > 0:
+                t = {
+                    'label': label,
+                    'query': self._bucket_to_query(query),
+                    'count': count,
+                    'selected': self._bucket_to_query(query) in self.selected_values,
+                    }
+                if t['selected']:
+                    self.active.append({
+                        'value': t['label'],
+                        'query': t['query'],
+                        })
+                self.values.append(t)

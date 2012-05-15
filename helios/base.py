@@ -38,24 +38,12 @@ class Searcher(object):
             fqs.append(query)
             params['fq'] = fqs
 
-
         if facets:
+            params['facet.field'] = []
+            params['facet.query'] = []
             params['facet'] = 'true'
-
             for facet in facets:
-                facet_fields = params.get('facet.field', [])
-                facet_fields.append(facet.final_query_field())
-                params['facet.field'] = facet_fields
-                if facet.sort:
-                    params['f.%s.facet.sort' % facet.solr_fieldname] = facet.sort
-                if facet.limit:
-                    params['f.%s.facet.limit' % facet.solr_fieldname] = facet.limit
-                if facet.offset:
-                    params['f.%s.facet.offset' % facet.solr_fieldname] = facet.offset
-                if facet.mincount:
-                    params['f.%s.facet.mincount' % facet.solr_fieldname] = facet.mincount
-                if facet.missing:
-                    params['f.%s.facet.missing' % facet.solr_fieldname] = facet.missing
+                facet.build_params(params)
 
         params['rows'] = rows
         params['start'] = offset
