@@ -11,7 +11,7 @@ class FacetResult(object):
 class BaseFacet(object):
     def __init__(self, name, **kwargs):
         self.name = name
-        self.form_fieldname = kwargs.pop('form_fieldname', None) or self.name.lower()
+        self.form_fieldname = kwargs.pop('form_fieldname', None) or self.name.lower().replace(" ", "_")
         self.solr_fieldname = kwargs.pop('solr_fieldname')
         self.multiselect_or = kwargs.pop('multiselect_or', None)
         self.active = []

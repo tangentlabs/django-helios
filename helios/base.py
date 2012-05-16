@@ -29,12 +29,13 @@ class Searcher(object):
         offset = kwargs.pop('offset', 0)
         rows = kwargs.pop('rows', 10)
         sort = kwargs.pop('sort', None)
+        fl = kwargs.pop('fl', None)
 
         params = {}
 
         for filter in filters:
             fqs = params.get('fq', [])
-            query = '%s:%s' % (filter[0], filter[1])
+            query = '%s:"%s"' % (filter[0], filter[1])
             fqs.append(query)
             params['fq'] = fqs
 
@@ -47,6 +48,9 @@ class Searcher(object):
 
         params['rows'] = rows
         params['start'] = offset
+
+        if fl:
+            params['fl'] = ','.join(fl)
 
         if sort:
             params['sort'] = sort
@@ -89,10 +93,12 @@ class Query(object):
         self.q = '*:*'
         self.start = 0
         self.end = 10
+        self.fl = None
 
     def set_limits(self, start, end):
         self.start = start
         self.end = end
+
 
     def add_filter(self, field, value):
         self.filters.append((field, value))
@@ -111,6 +117,9 @@ class Query(object):
     def set_q(self, q):
         self.q = q
 
+    def set_fl(self, *fl):
+        self.fl = fl
+
     def run(self):
         sort = ', '.join(['%s %s' % (x[0], x[1]) for x in self.sorts])
 
@@ -119,7 +128,8 @@ class Query(object):
             'facets': self.facets,
             'filters': self.filters,
             'offset': self.start,
-            'rows': self.end - self.start
+            'rows': self.end - self.start,
+            'fl': self.fl,
         }
 
         if sort:
