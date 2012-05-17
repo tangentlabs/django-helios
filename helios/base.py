@@ -84,6 +84,7 @@ class DisMaxSearcher(Searcher):
             'defType': 'dismax',
             'qf': self.config.get_qf(),
             'pf': self.config.get_pf(),
+            'bf': self.config.bf,
             'mm': self.config.mm,
             'tie': self.config.tie,
         })
