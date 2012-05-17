@@ -35,7 +35,13 @@ class Searcher(object):
 
         for filter in filters:
             fqs = params.get('fq', [])
-            query = '%s:"%s"' % (filter[0], filter[1])
+
+            val = str(filter[1])
+
+            if val[0] != '(':
+                val = '"%s"' % val
+
+            query = '%s:%s' % (filter[0], val)
             fqs.append(query)
             params['fq'] = fqs
 
