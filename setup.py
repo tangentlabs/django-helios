@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name='django-helios',
@@ -9,8 +9,7 @@ setup(
     license="MIT",
     author="Andrew Ingram",
     author_email="andy@andrewingram.net",
-    packages=['helios'],
-    package_dir={'': '.'},
+    packages=find_packages(),
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Environment :: Web Environment',
