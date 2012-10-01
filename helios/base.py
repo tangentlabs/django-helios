@@ -1,5 +1,4 @@
 
-
 class DisMaxConfig(object):
     def __init__(self, qf, pf, bq=None, bf=None, ps=None, qs=None, mm='2<-25%', tie='0.1'):
         self.qf = qf
@@ -20,8 +19,8 @@ class DisMaxConfig(object):
 
 class Searcher(object):
 
-    def __init__(self, **kwargs):
-        self.connection = kwargs.pop('connection')
+    def __init__(self, connection):
+        self.connection = connection
 
     def get_search_params(self, **kwargs):
         filters = kwargs.pop('filters', [])
