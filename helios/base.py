@@ -36,13 +36,13 @@ class Searcher(object):
         for filter in filters:
             fqs = params.get('fq', [])
 
-            val = unicode(filter[1]).encode('utf-8')
+            val = unicode(filter[1])
 
             if val[0] != '(':
-                val = '"%s"' % val
+                val = u'"%s"' % (val,)
 
-            query = '%s:%s' % (filter[0], val)
-            fqs.append(query)
+            query = u'%s:%s' % (filter[0], val)
+            fqs.append(query.encode('utf-8'))
             params['fq'] = fqs
 
         if facets:
@@ -105,7 +105,6 @@ class Query(object):
     def set_limits(self, start, end):
         self.start = start
         self.end = end
-
 
     def add_filter(self, field, value):
         self.filters.append((field, value))
