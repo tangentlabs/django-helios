@@ -28,8 +28,11 @@ class BaseFacet(object):
 
     def filter_query(self, query):
         if self.selected_values:
-            value_str = ' OR '.join(['"%s"' % self.transform_form_value(x) for x in self.selected_values])
-            query.add_filter('{!tag=%s}%s' % (self.form_fieldname, self.solr_fieldname), '(%s)' % value_str)
+            value_str = ' OR '.join(['%s' % (self.transform_form_value(x),)
+                                     for x in self.selected_values])
+            query.add_filter('{!tag=%s}%s' % (self.form_fieldname,
+                                              self.solr_fieldname),
+                             '(%s)' % (value_str,))
 
     def formfield(self):
         """
@@ -91,7 +94,6 @@ class BaseFacet(object):
                         'query': t['query'],
                         })
                 self.values.append(t)
-
 
     def formfield_name(self):
         return None
