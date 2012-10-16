@@ -36,7 +36,7 @@ class Searcher(object):
         for filter in filters:
             fqs = params.get('fq', [])
 
-            val = str(filter[1])
+            val = unicode(filter[1]).encode('utf-8')
 
             if val[0] != '(':
                 val = '"%s"' % val
