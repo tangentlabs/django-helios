@@ -1,3 +1,4 @@
+from .utils import quote
 
 
 class DisMaxConfig(object):
@@ -33,15 +34,9 @@ class Searcher(object):
 
         params = {}
 
-        for filter in filters:
+        for field, value in filters:
             fqs = params.get('fq', [])
-
-            val = unicode(filter[1])
-
-            if val[0] != '(':
-                val = u'"%s"' % (val,)
-
-            query = u'%s:%s' % (filter[0], val)
+            query = u'%s:%s' % (field, value)
             fqs.append(query.encode('utf-8'))
             params['fq'] = fqs
 
@@ -107,7 +102,7 @@ class Query(object):
         self.end = end
 
     def add_filter(self, field, value):
-        self.filters.append((field, value))
+        self.filters.append((field, quote(value)))
 
     def add_facet(self, facet):
         self.facets.append(facet)

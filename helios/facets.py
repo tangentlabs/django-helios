@@ -1,4 +1,5 @@
-from helios.forms.fields import MultipleCharField
+from .forms.fields import MultipleCharField
+from .utils import OneOf
 
 
 class FacetResult(object):
@@ -28,11 +29,10 @@ class BaseFacet(object):
 
     def filter_query(self, query):
         if self.selected_values:
-            value_str = ' OR '.join(['%s' % (self.transform_form_value(x),)
-                                     for x in self.selected_values])
+            fltr = OneOf(*self.selected_values)
             query.add_filter('{!tag=%s}%s' % (self.form_fieldname,
                                               self.solr_fieldname),
-                             '(%s)' % (value_str,))
+                             fltr)
 
     def formfield(self):
         """
@@ -45,12 +45,6 @@ class BaseFacet(object):
 
     def facet_sortkey(self, value):
         return 0
-
-    def transform_form_value(self, value):
-        """
-        Converts the cleaned form value into a format suitable for Solr's fq parameter
-        """
-        return '"%s"' % value
 
     def set_selected_values(self, values):
         self.selected_values = values
