@@ -15,7 +15,6 @@ class OneOf(object):
 
         (val1 OR val2 OR ...)
     '''
-
     def __init__(self, *values):
         self.values = values
 
@@ -29,9 +28,20 @@ class AllOf(object):
 
         (val1 AND val2 AND ...)
     '''
-
     def __init__(self, *values):
         self.values = values
 
     def __unicode__(self):
         return u'(%s)' % (u' AND '.join(quote(v) for v in self.values))
+
+
+class InRange(object):
+    '''
+    Will match a range
+    '''
+    def __init__(self, start, stop):
+        self.start = start
+        self.stop = stop
+
+    def __unicode__(self):
+        return u'[%s TO %s]' % (self.start, self.stop)

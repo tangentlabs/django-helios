@@ -1,5 +1,7 @@
+import decimal
+
 from .forms.fields import MultipleCharField
-from .utils import OneOf
+from .utils import OneOf, InRange
 
 
 class FacetResult(object):
@@ -27,12 +29,16 @@ class BaseFacet(object):
             index_field = '{!ex=%s}%s' % (self.form_fieldname, index_field)
         return index_field
 
+    def transform_selected_value(self, value):
+        return value
+
     def filter_query(self, query):
         if self.selected_values:
-            fltr = OneOf(*self.selected_values)
+            values = [self.transform_selected_value(v)
+                      for v in self.selected_values]
             query.add_filter('{!tag=%s}%s' % (self.form_fieldname,
                                               self.solr_fieldname),
-                             fltr)
+                             OneOf(*values))
 
     def formfield(self):
         """
@@ -133,8 +139,8 @@ class QueryFacet(BaseFacet):
         params = super(QueryFacet, self).build_params(params)
 
         for choice in self.choices:
-            query = '%s:%s' % (self.final_query_field(), choice[1])
-            params['facet.query'].append(query)
+            query = u'%s:%s' % (self.final_query_field(), choice[1])
+            params['facet.query'].append(query.encode('utf-8'))
 
         return params
 
@@ -142,7 +148,7 @@ class QueryFacet(BaseFacet):
         limits = bucket[1:-1].split(' ')
         return '%s-%s' % (limits[0] if limits[0] != '*' else '', limits[2] if limits[2] != '*' else '')
 
-    def transform_form_value(self, value):
+    def transform_selected_value(self, value):
         try:
             start, end = value.split('-')
         except ValueError:
@@ -153,19 +159,19 @@ class QueryFacet(BaseFacet):
             start = '*'
         else:
             try:
-                float(start)
+                start = decimal.Decimal(start)
             except ValueError:
                 start = '*'
         if end in ['', '*']:
             end = '*'
         else:
             try:
-                float(end)
+                end = decimal.Decimal(end)
             except ValueError:
                 # Probably a hacking attempt
                 end = '*'
 
-        return "[%s TO %s]" % (start, end)
+        return InRange(start, end)
 
     def update(self, facet_results):
         self.values = []
