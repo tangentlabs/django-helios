@@ -152,26 +152,15 @@ class QueryFacet(BaseFacet):
         try:
             start, end = value.split('-')
         except ValueError:
-            start = '*'
-            end = '*'
+            return InRange('*', '*')
 
-        if start in ['', '*']:
-            start = '*'
-        else:
+        def parse(value):
             try:
-                start = decimal.Decimal(start)
-            except ValueError:
-                start = '*'
-        if end in ['', '*']:
-            end = '*'
-        else:
-            try:
-                end = decimal.Decimal(end)
-            except ValueError:
-                # Probably a hacking attempt
-                end = '*'
+                return decimal.Decimal(value)
+            except decimal.InvalidOperation:
+                return '*'
 
-        return InRange(start, end)
+        return InRange(parse(start), parse(end))
 
     def update(self, facet_results):
         self.values = []
