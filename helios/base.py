@@ -116,7 +116,7 @@ class Query(object):
         self.sorts.append((field, direction))
 
     def set_q(self, q):
-        self.q = q
+        self.q = quote(q)
 
     def set_fl(self, *fl):
         self.fl = fl
