@@ -16,9 +16,10 @@ def escape_query(query):
     '''
     Quote query to play nice with Solr query parser.
     '''
-    reg = r'''(^ ([+-]+? | {!?) (?=\s|$) |
-               (?<=\s) ([+-]+? | {!?) (?=\s|$))'''
-    return re.sub(reg, r'\\\g<0>', query.lower(), flags=re.VERBOSE)
+    req_expr = r'''(^ ([+-]+? | {!?) (?=\s|$) |
+                    (?<=\s) ([+-]+? | {!?) (?=\s|$))'''
+    pattern = re.compile(req_expr, flags=re.VERBOSE)
+    return re.sub(pattern, r'\\\g<0>', query.lower())
 
 
 class OneOf(object):
