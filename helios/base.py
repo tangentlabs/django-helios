@@ -1,4 +1,4 @@
-from .utils import quote
+from .utils import quote, escape_query
 
 
 class DisMaxConfig(object):
@@ -87,6 +87,7 @@ class DisMaxSearcher(Searcher):
 
 
 class Query(object):
+
     def __init__(self, searcher):
         self.searcher = searcher
         self.filters = []
@@ -116,7 +117,7 @@ class Query(object):
         self.sorts.append((field, direction))
 
     def set_q(self, q):
-        self.q = quote(q)
+        self.q = escape_query(q)
 
     def set_fl(self, *fl):
         self.fl = fl

@@ -1,3 +1,6 @@
+import re
+
+
 def quote(val):
     '''
     Quote a value for safe usage with Solr
@@ -7,6 +10,15 @@ def quote(val):
         return u'"%s"' % (val,)
     else:
         return unicode(val)
+
+
+def escape_query(query):
+    '''
+    Quote query to play nice with Solr query parser.
+    '''
+    reg = r'''(^ ([+-]+? | {!?) (?=\s|$) |
+               (?<=\s) ([+-]+? | {!?) (?=\s|$))'''
+    return re.sub(reg, r'\\\g<0>', query.lower(), flags=re.VERBOSE)
 
 
 class OneOf(object):
