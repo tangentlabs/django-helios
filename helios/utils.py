@@ -16,8 +16,8 @@ def escape_query(query):
     '''
     Quote query to play nice with Solr query parser.
     '''
-    req_expr = r'''(^ ([+-]+? | {!?) (?=\s|$) |
-                    (?<=\s) ([+-]+? | {!?) (?=\s|$))'''
+    req_expr = r'''(^ ([+-]+? | {!? | \|\|? | \&\&?) (?=\s|$) |
+                    (?<=\s) ([+-]+? | {!? | \|\|? | \&\&?) (?=\s|$))'''
     pattern = re.compile(req_expr, flags=re.VERBOSE)
     return re.sub(pattern, r'\\\g<0>', query.lower())
 

@@ -20,7 +20,13 @@ class Quoting(unittest.TestCase):
                            ('{! aaa', '\{! aaa'),
                            ('aaa+ bbb+', 'aaa+ bbb+'),
                            ('AND', 'and'),
-                           ('OR', 'or')]
+                           ('OR', 'or'),
+                           ('||', '\||'),
+                           ('|||', '|||'),
+                           (' || |', ' \|| \|'),
+                           ('&&', '\&&'),
+                           ('&&&', '&&&'),
+                           ('&& &', '\&& \&')]
 
         for orig, escaped in orig_to_escaped:
             self.assertEquals(escape_query(orig), escaped)
