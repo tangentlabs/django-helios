@@ -2,6 +2,7 @@ from .utils import quote, escape_query
 
 
 class DisMaxConfig(object):
+
     def __init__(self, qf, pf, bq=None, bf=None, ps=None, qs=None, mm='2<-25%', tie='0.1'):
         self.qf = qf
         self.pf = pf
@@ -21,8 +22,9 @@ class DisMaxConfig(object):
 
 class Searcher(object):
 
-    def __init__(self, **kwargs):
-        self.connection = kwargs.pop('connection')
+    def __init__(self, connection=None, extra=None):
+        self.connection = connection
+        self.extra = extra or {}
 
     def get_search_params(self, **kwargs):
         filters = kwargs.pop('filters', [])
@@ -56,6 +58,8 @@ class Searcher(object):
         if sort:
             params['sort'] = sort
 
+        params.update(self.extra)
+
         return params
 
     def search(self, **kwargs):
@@ -64,26 +68,6 @@ class Searcher(object):
 
     def new_query(self):
         return Query(self)
-
-
-class DisMaxSearcher(Searcher):
-
-    def __init__(self, **kwargs):
-        self.config = kwargs.pop('config')
-        super(DisMaxSearcher, self).__init__(**kwargs)
-
-    def get_search_params(self, **kwargs):
-        params = super(DisMaxSearcher, self).get_search_params(**kwargs)
-
-        params.update({
-            'defType': 'dismax',
-            'qf': self.config.get_qf(),
-            'pf': self.config.get_pf(),
-            'bf': self.config.bf,
-            'mm': self.config.mm,
-            'tie': self.config.tie,
-        })
-        return params
 
 
 class Query(object):

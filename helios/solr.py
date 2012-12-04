@@ -27,21 +27,21 @@ class SolrResults(object):
 
         self.facets = []
 
-        for k,v in facets.get('facet_fields', {}).iteritems():
-            pairs = zip(v[0::2],v[1::2])
+        for k, v in facets.get('facet_fields', {}).iteritems():
+            pairs = zip(v[0::2], v[1::2])
             self.facets.append(SolrFacetResult(k, pairs))
 
         facet_queries_buckets = defaultdict(list)
 
-        for k,v in facets.get('facet_queries', {}).iteritems():
+        for k, v in facets.get('facet_queries', {}).iteritems():
             if k.find('{') == 0:
                 close_brace = k.find('}')
-                k = k[close_brace+1:]
+                k = k[close_brace + 1:]
             fieldname = k[:k.find(':')]
-            bucket = k[k.find(':')+1:]
+            bucket = k[k.find(':') + 1:]
             facet_queries_buckets[fieldname].append((bucket, v))
 
-        for k,pairs in facet_queries_buckets.iteritems():
+        for k, pairs in facet_queries_buckets.iteritems():
             self.facets.append(SolrFacetResult(k, pairs))
 
     def __len__(self):
@@ -72,7 +72,6 @@ class SolrConnection(object):
         params['wt'] = 'json'
         path = '%s/select' % self.url
         return self.session.get(path, params=params)
-
 
     def search(self, q, **kwargs):
         params = {'q': q}
