@@ -1,25 +1,6 @@
 from .utils import quote, escape_query
 
 
-class DisMaxConfig(object):
-
-    def __init__(self, qf, pf, bq=None, bf=None, ps=None, qs=None, mm='2<-25%', tie='0.1'):
-        self.qf = qf
-        self.pf = pf
-        self.mm = mm
-        self.ps = ps
-        self.qs = qs
-        self.tie = tie
-        self.bq = bq
-        self.bf = bf
-
-    def get_qf(self):
-        return ' '.join(['%s^%s' % (x[0], x[1]) for x in self.qf])
-
-    def get_pf(self):
-        return ' '.join(['%s^%s' % (x[0], x[1]) for x in self.pf])
-
-
 class Searcher(object):
 
     def __init__(self, connection=None, extra=None):
