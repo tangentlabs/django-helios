@@ -7,13 +7,10 @@ class Searcher(object):
         self.connection = connection
         self.extra = extra or {}
 
-    def get_search_params(self, **kwargs):
-        filters = kwargs.pop('filters', [])
-        facets = kwargs.pop('facets', [])
-        offset = kwargs.pop('offset', 0)
-        rows = kwargs.pop('rows', 10)
-        sort = kwargs.pop('sort', None)
-        fl = kwargs.pop('fl', None)
+    def get_search_params(self, filters=None, facets=None, offset=0, rows=10,
+                          sort=None, fl=None, **kwargs):
+        filters = filters or []
+        facets = facets or []
 
         params = {}
 
@@ -40,6 +37,7 @@ class Searcher(object):
             params['sort'] = sort
 
         params.update(self.extra)
+        params.update(kwargs)
 
         return params
 
@@ -87,7 +85,7 @@ class Query(object):
     def set_fl(self, *fl):
         self.fl = fl
 
-    def run(self):
+    def run(self, **extra):
         sort = ', '.join(['%s %s' % (x[0], x[1]) for x in self.sorts])
 
         kwargs = {
@@ -101,5 +99,8 @@ class Query(object):
 
         if sort:
             kwargs['sort'] = sort
+
+        if extra:
+            kwargs.update(extra)
 
         return self.searcher.search(**kwargs)

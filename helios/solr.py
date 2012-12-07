@@ -102,12 +102,11 @@ class SolrConnection(object):
 
         return SolrResults(result['response']['docs'], result['response']['numFound'], **result_kwargs)
 
-
     def add(self, docs):
         pass
 
     def _update(self, message):
-        path = '%s/update/' % self.url
+        pass
 
     def delete(self, id=None, query=None, queries=None):
         pass
