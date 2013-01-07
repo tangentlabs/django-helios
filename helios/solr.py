@@ -82,7 +82,7 @@ class SolrConnection(object):
         response = self._select(params)
         result = response.json
         if not result:
-            raise SolrException(response.content) 
+            raise SolrException(response.content)
 
         result_kwargs = {}
 
