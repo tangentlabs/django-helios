@@ -1,16 +1,15 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name='django-helios',
-    version='0.0.1',
+    version='0.0.14',
     url='https://github.com/AndrewIngram/django-helios',
     description="Opinionated Solr-based search for Django",
     long_description=open('README.rst', 'r').read(),
     license="MIT",
     author="Andrew Ingram",
     author_email="andy@andrewingram.net",
-    packages=['helios'],
-    package_dir={'': '.'},
+    packages=find_packages(),
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Environment :: Web Environment',

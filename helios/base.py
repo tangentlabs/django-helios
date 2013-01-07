@@ -1,66 +1,43 @@
-
-class DisMaxConfig(object):
-    def __init__(self, qf, pf, bq=None, bf=None, ps=None, qs=None, mm='2<-25%', tie='0.1'):
-        self.qf = qf
-        self.pf = pf
-        self.mm = mm
-        self.ps = ps
-        self.qs = qs
-        self.tie = tie
-        self.bq = bq
-        self.bf = bf
-
-    def get_qf(self):
-        return ' '.join(['%s^%s' % (x[0], x[1]) for x in self.qf])
-
-    def get_pf(self):
-        return ' '.join(['%s^%s' % (x[0], x[1]) for x in self.pf])
+from .utils import quote, escape_query
 
 
 class Searcher(object):
 
-    def __init__(self, connection):
+    def __init__(self, connection=None, extra=None):
         self.connection = connection
+        self.extra = extra or {}
 
-    def get_search_params(self, **kwargs):
-        filters = kwargs.pop('filters', [])
-        facets = kwargs.pop('facets', [])
-        offset = kwargs.pop('offset', 0)
-        rows = kwargs.pop('rows', 10)
-        sort = kwargs.pop('sort', None)
+    def get_search_params(self, filters=None, facets=None, offset=0, rows=10,
+                          sort=None, fl=None, **kwargs):
+        filters = filters or []
+        facets = facets or []
 
         params = {}
 
-        for filter in filters:
+        for field, value in filters:
             fqs = params.get('fq', [])
-            query = '%s:%s' % (filter[0], filter[1])
-            fqs.append(query)
+            query = u'%s:%s' % (field, value)
+            fqs.append(query.encode('utf-8'))
             params['fq'] = fqs
 
-
         if facets:
+            params['facet.field'] = []
+            params['facet.query'] = []
             params['facet'] = 'true'
-
             for facet in facets:
-                facet_fields = params.get('facet.field', [])
-                facet_fields.append(facet.final_query_field())
-                params['facet.field'] = facet_fields
-                if facet.sort:
-                    params['f.%s.facet.sort' % facet.solr_fieldname] = facet.sort
-                if facet.limit:
-                    params['f.%s.facet.limit' % facet.solr_fieldname] = facet.limit
-                if facet.offset:
-                    params['f.%s.facet.offset' % facet.solr_fieldname] = facet.offset
-                if facet.mincount:
-                    params['f.%s.facet.mincount' % facet.solr_fieldname] = facet.mincount
-                if facet.missing:
-                    params['f.%s.facet.missing' % facet.solr_fieldname] = facet.missing
+                facet.build_params(params)
 
         params['rows'] = rows
         params['start'] = offset
 
+        if fl:
+            params['fl'] = ','.join(fl)
+
         if sort:
             params['sort'] = sort
+
+        params.update(self.extra)
+        params.update(kwargs)
 
         return params
 
@@ -72,26 +49,8 @@ class Searcher(object):
         return Query(self)
 
 
-class DisMaxSearcher(Searcher):
-
-    def __init__(self, **kwargs):
-        self.config = kwargs.pop('config')
-        super(DisMaxSearcher, self).__init__(**kwargs)
-
-    def get_search_params(self, **kwargs):
-        params = super(DisMaxSearcher, self).get_search_params(**kwargs)
-
-        params.update({
-            'defType': 'dismax',
-            'qf': self.config.get_qf(),
-            'pf': self.config.get_pf(),
-            'mm': self.config.mm,
-            'tie': self.config.tie,
-        })
-        return params
-
-
 class Query(object):
+
     def __init__(self, searcher):
         self.searcher = searcher
         self.filters = []
@@ -100,13 +59,14 @@ class Query(object):
         self.q = '*:*'
         self.start = 0
         self.end = 10
+        self.fl = None
 
     def set_limits(self, start, end):
         self.start = start
         self.end = end
 
     def add_filter(self, field, value):
-        self.filters.append((field, value))
+        self.filters.append((field, quote(value)))
 
     def add_facet(self, facet):
         self.facets.append(facet)
@@ -120,9 +80,12 @@ class Query(object):
         self.sorts.append((field, direction))
 
     def set_q(self, q):
-        self.q = q
+        self.q = escape_query(q)
 
-    def run(self):
+    def set_fl(self, *fl):
+        self.fl = fl
+
+    def run(self, **extra):
         sort = ', '.join(['%s %s' % (x[0], x[1]) for x in self.sorts])
 
         kwargs = {
@@ -130,10 +93,14 @@ class Query(object):
             'facets': self.facets,
             'filters': self.filters,
             'offset': self.start,
-            'rows': self.end - self.start
+            'rows': self.end - self.start,
+            'fl': self.fl,
         }
 
         if sort:
             kwargs['sort'] = sort
+
+        if extra:
+            kwargs.update(extra)
 
         return self.searcher.search(**kwargs)
