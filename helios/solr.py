@@ -8,6 +8,10 @@ except ImportError:
     import json
 
 
+class SolrException(Exception):
+    pass
+
+
 class SolrFacetResult(object):
     def __init__(self, fieldname, results):
         self.fieldname = fieldname
@@ -54,8 +58,6 @@ class SolrResults(object):
 class SolrConnection(object):
 
     def __init__(self, url, handler='dismax'):
-        self.session = requests.session()
-        self.decoder = json.JSONDecoder()
         self.url = url
         self.handler = handler
         self.scheme, netloc, path, query, fragment = urlsplit(url)
@@ -71,14 +73,16 @@ class SolrConnection(object):
     def _select(self, params):
         params['wt'] = 'json'
         path = '%s/select' % self.url
-        return self.session.get(path, params=params)
+        return requests.get(path, params=params)
 
     def search(self, q, **kwargs):
         params = {'q': q}
         params.update(kwargs)
 
         response = self._select(params)
-        result = self.decoder.decode(response.content)
+        result = response.json
+        if not result:
+            raise SolrException(response.content) 
 
         result_kwargs = {}
 
