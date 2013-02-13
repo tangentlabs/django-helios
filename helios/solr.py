@@ -2,11 +2,6 @@ import requests
 from collections import defaultdict
 from urlparse import urlsplit, urlunsplit
 
-try:
-    import simplejson as json
-except ImportError:
-    import json
-
 
 class SolrException(Exception):
     pass
@@ -80,8 +75,9 @@ class SolrConnection(object):
         params.update(kwargs)
 
         response = self._select(params)
-        result = response.json
-        if not result:
+        try:
+            result = response.json()
+        except Exception:
             raise SolrException(response.content)
 
         result_kwargs = {}

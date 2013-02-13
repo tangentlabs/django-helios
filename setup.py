@@ -10,6 +10,7 @@ setup(
     author="Andrew Ingram",
     author_email="andy@andrewingram.net",
     packages=find_packages(),
+    install_requires=['requests>=1.1.0'],
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Environment :: Web Environment',
