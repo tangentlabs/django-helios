@@ -1,5 +1,6 @@
 import requests
 from collections import defaultdict
+from helios.solr import SolrConnection
 from urlparse import urlsplit, urlunsplit
 
 
@@ -112,7 +113,7 @@ class SolrConnection(object):
         return requests.post(path, params=params)
 
     def delete(self, field, value):
-        payload = '<delete><query>%(field)s:%(value)s</query></delete>' % {
+        payload = u'<delete><query>%(field)s:%(value)s</query></delete>' % {
             'field': field, 'value': value}
         self._update(payload)
 
