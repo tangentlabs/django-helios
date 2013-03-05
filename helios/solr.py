@@ -105,11 +105,16 @@ class SolrConnection(object):
     def add(self, docs):
         pass
 
-    def _update(self, message):
-        pass
+    def _update(self, payload, params=None):
+        params = params or {}
+        params['wt'] = 'json'
+        path = '%s/update' % self.url
+        return requests.post(path, params=params)
 
-    def delete(self, id=None, query=None, queries=None):
-        pass
+    def delete(self, field, value):
+        payload = '<delete><query>%(field)s:%(value)s</query></delete>' % {
+            'field': field, 'value': value}
+        self._update(payload)
 
     def commit(self):
         pass

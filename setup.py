@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='django-helios',
-    version='0.0.15',
+    version='0.0.16',
     url='https://github.com/AndrewIngram/django-helios',
     description="Opinionated Solr-based search for Django",
     long_description=open('README.rst', 'r').read(),
