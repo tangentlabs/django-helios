@@ -1,6 +1,5 @@
 import requests
 from collections import defaultdict
-from helios.solr import SolrConnection
 from urlparse import urlsplit, urlunsplit
 
 
@@ -9,12 +8,14 @@ class SolrException(Exception):
 
 
 class SolrFacetResult(object):
+
     def __init__(self, fieldname, results):
         self.fieldname = fieldname
         self.results = results
 
 
 class SolrResults(object):
+
     def __init__(self, docs, hits, highlighting=None, facets=None, spellcheck=None, stats=None, qtime=None, debug=None):
         self.docs = docs
         self.hits = hits
@@ -110,7 +111,8 @@ class SolrConnection(object):
         params = params or {}
         params['wt'] = 'json'
         path = '%s/update' % self.url
-        return requests.post(path, params=params)
+        return requests.post(path, params=params, data=payload,
+                             headers={'content-type': 'text/xml'})
 
     def delete(self, field, value):
         payload = u'<delete><query>%(field)s:%(value)s</query></delete>' % {
