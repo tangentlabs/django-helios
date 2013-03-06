@@ -16,7 +16,10 @@ class BaseFacet(object):
         self.name = name
         self.form_fieldname = kwargs.pop('form_fieldname', None) or self.name.lower().replace(" ", "_")
         self.solr_fieldname = kwargs.pop('solr_fieldname')
-        self.multiselect_or = kwargs.pop('multiselect_or', None)
+        self.params = kwargs.pop('params', [])
+        multiselect_or = kwargs.pop('multiselect_or', None)
+        if multiselect_or:
+            self.params.append('ex=%s' % (self.form_fieldname,))
         self.active = []
         self.selected_values = []
 
@@ -25,9 +28,10 @@ class BaseFacet(object):
 
     def final_query_field(self):
         index_field = self.solr_fieldname
-        if self.multiselect_or:
-            index_field = '{!ex=%s}%s' % (self.form_fieldname, index_field)
-        return index_field
+        local = ''
+        if self.params:
+            local = '{!%s}' % (' '.join(self.params),)
+        return local + index_field
 
     def transform_selected_value(self, value):
         return value
